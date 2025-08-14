@@ -36,10 +36,10 @@ SMTP_PORT = 465
 #                                 KONFIGURASI DATABASE
 # ==================================================================================================
 # Ubah nilai di bawah ini dengan detail database MySQL Anda.
-DB_HOST = "sql10.freesqldatabase.com"       # Host database
-DB_USER = "sql10794884"            # Username database
-DB_PASSWORD = "JbDXM3EPDt"            # Password database
-DB_NAME = "sql10794884"  # Nama database
+DB_HOST = "localhost"       # Host database
+DB_USER = "root"            # Username database
+DB_PASSWORD = "12345678"            # Password database
+DB_NAME = "btc_scanning"  # Nama database
 
 def get_db_connection():
     """
