@@ -1,15 +1,26 @@
-# btc.py
+# btc_reverse.py
 
 import hashlib
 import ecdsa
 import base58
 import os
 import sys
-import json
 
 # ==================================================================================================
 #                                 KONFIGURASI UTAMA
 # ==================================================================================================
+
+# Atur rentang pencarian private key dalam format heksadesimal.
+# CONTOH DARI PENGGUNA:
+# start_range = ""
+# end_range = "00000000000000000000000000000000000000000000000000000000000007ff"
+# 0000000000000000000000000000000000000000000000000000000000000400
+# 0000000000000000000000000000000000000000000000400000000000000000
+# 00000000000000000000000000000000000000000000007fffffffffffffffff
+# 400000000000000000:7fffffffffffffffff
+# Silakan ubah nilai di bawah ini sesuai dengan rentang yang ingin Anda coba.
+start_range = "0000000000000000000000000000000000000000000000000000000000000200"
+end_range   = "00000000000000000000000000000000000000000000000000000000000003ff"
 
 # Nama file untuk daftar alamat Bitcoin yang akan dicari.
 PUZZLE_FILE = "puzzle.txt"
@@ -18,12 +29,7 @@ PUZZLE_FILE = "puzzle.txt"
 WIN_FILE = "puzzle_win.txt"
 
 # Nama file untuk menyimpan log pencarian yang gagal.
-FAIL_FILE = "pencarian_gagal.txt"
-
-# Nama file konfigurasi untuk rentang pencarian.
-# Program akan membaca dan memperbarui file ini untuk menyimpan progres.
-RANGE_FILE = "range.json"
-
+FAIL_FILE = "pencarian_gagal_reverse.txt"
 
 # ==================================================================================================
 #                               FUNGSI UNTUK PEMROSESAN BITCOIN
@@ -118,63 +124,21 @@ def save_failed_search(start, end, status):
     Menyimpan log pencarian yang gagal atau terinterupsi ke dalam file.
     """
     with open(FAIL_FILE, 'a') as f:
-        f.write(f"Rentang pencarian dari {start} sampai {end} {status}.\n")
+        f.write(f"Rentang pencarian terbalik dari {end} sampai {start} {status}.\n")
         f.write("================================================================\n\n")
-
-def load_range_from_json(file_path):
-    """
-    Membaca rentang pencarian dari file JSON.
-    """
-    try:
-        with open(file_path, 'r') as f:
-            data = json.load(f)
-            return data.get("start"), data.get("end")
-    except FileNotFoundError:
-        # Jika file tidak ditemukan, ini berarti pencarian baru
-        print(f"File '{file_path}' tidak ditemukan. Memulai pencarian baru.")
-        return None, None
-    except json.JSONDecodeError:
-        print(f"Error: File '{file_path}' memiliki format JSON yang salah.")
-        return None, None
-    except Exception as e:
-        print(f"Terjadi error saat memuat file '{file_path}': {e}")
-        return None, None
-
-def save_range_to_json(start, end, file_path):
-    """
-    Menyimpan rentang pencarian ke file JSON untuk melacak progres.
-    """
-    try:
-        with open(file_path, 'w') as f:
-            json.dump({"start": start, "end": end}, f, indent=4)
-    except Exception as e:
-        print(f"Error: Gagal menyimpan progres ke file '{file_path}': {e}")
 
 def main():
     """
     Fungsi utama untuk melakukan brute force pada rentang private key.
     """
-    # Ambil rentang pencarian dari file JSON
-    start_range_original = "0000000000000000000000000000000000000000000000400000000000000000"
-    end_range_original = "00000000000000000000000000000000000000000000007fffffffffffffffff"
-
-    start_range, end_range = load_range_from_json(RANGE_FILE)
-
-    # Jika file range.json tidak ditemukan atau kosong, gunakan rentang awal
-    if not start_range or not end_range:
-        start_range = start_range_original
-        end_range = end_range_original
-        # Simpan rentang awal ke file range.json
-        save_range_to_json(start_range, end_range, RANGE_FILE)
-
     # Periksa apakah file puzzle.txt ada
     target_addresses = get_target_addresses(PUZZLE_FILE)
     if not target_addresses:
         print("Tidak ada alamat yang ditemukan di puzzle.txt. Program berhenti.")
         return
 
-    print("Mulai mencari private key...")
-    print(f"Rentang pencarian: {start_range} sampai {end_range}")
+    print("Mulai mencari private key secara terbalik...")
+    print(f"Rentang pencarian: {end_range} sampai {start_range}")
     print(f"Alamat target: {target_addresses}")
     print("----------------------------------------------------------------")
 
@@ -188,25 +152,14 @@ def main():
 
     # Variabel untuk melacak apakah kecocokan ditemukan dan kunci terakhir yang discan
     match_found = False
-    last_scanned_key = start_range
-    scanned_keys_count = 0
+    last_scanned_key = end_range
 
     try:
-        # Lakukan iterasi dari start_int ke end_int
-        for i in range(start_int, end_int + 1):
+        # Lakukan iterasi dari end_int ke start_int secara terbalik
+        for i in range(end_int, start_int - 1, -1):
             # Konversi integer kembali ke format hex 64 digit
             private_key_hex = hex(i)[2:].zfill(64)
-            scanned_keys_count += 1
-            last_scanned_key = private_key_hex # Simpan kunci terakhir yang sedang diproses
-
-            # Simpan kunci terakhir setiap 10000 iterasi ke file range.json
-            if scanned_keys_count % 10000 == 0:
-                print(f"\nProgres disimpan. Iterasi ke-{scanned_keys_count:,}. Rentang baru: {last_scanned_key} sampai {end_range}\n")
-                save_range_to_json(last_scanned_key, end_range, RANGE_FILE)
-
-            # Tampilkan private key dan alamat yang sedang diproses
-            if scanned_keys_count % 1000 == 0:
-                print(f"[{scanned_keys_count:,}/{total_keys:,}] Mencoba private key: {private_key_hex}")
+            last_scanned_key = private_key_hex  # Simpan kunci terakhir yang sedang diproses
 
             # Hitung public key dari private key
             public_key_hex = private_key_to_public_key(private_key_hex)
@@ -217,6 +170,11 @@ def main():
             bitcoin_address = public_key_to_address(public_key_hex)
             if not bitcoin_address:
                 continue
+
+            # Tampilkan private key dan alamat yang sedang diproses
+            # Tampilkan status setiap 10000 iterasi
+            if (end_int - i) % 10000 == 0:
+                print(f"[{end_int - i + 1}/{total_keys}] Mencoba private key: {private_key_hex}")
 
             # Periksa apakah alamat yang dihasilkan cocok dengan alamat target
             if bitcoin_address in target_addresses:
@@ -230,9 +188,6 @@ def main():
                 save_winning_key(private_key_hex, public_key_hex, bitcoin_address)
                 print(f"\nHasil telah disimpan ke file {WIN_FILE}")
 
-                # Simpan progres terakhir sebelum keluar
-                save_range_to_json(private_key_hex, end_range, RANGE_FILE)
-
                 match_found = True
                 break # Berhenti setelah menemukan kunci
 
@@ -240,11 +195,9 @@ def main():
         # Menangani interupsi dari keyboard (Ctrl+C)
         print("\n\n----------------------------------------------------------------")
         print("Pencarian dihentikan oleh pengguna.")
-        print(f"Rentang yang terakhir kali discan adalah dari {start_range} sampai {last_scanned_key}.")
+        print(f"Rentang yang terakhir kali discan adalah dari {end_range} sampai {last_scanned_key}.")
         save_failed_search(start_range, last_scanned_key, "dihentikan oleh pengguna")
-        # Simpan progres terakhir ke file range.json
-        save_range_to_json(last_scanned_key, end_range, RANGE_FILE)
-        print(f"Progres terakhir telah disimpan ke file {RANGE_FILE}")
+        print(f"Log pencarian yang dihentikan telah disimpan ke file {FAIL_FILE}")
         sys.exit(0) # Keluar dari program
 
     # Log pencarian yang gagal setelah loop selesai
