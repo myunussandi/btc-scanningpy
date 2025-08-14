@@ -37,8 +37,8 @@ SMTP_PORT = 465
 # ==================================================================================================
 # Ubah nilai di bawah ini dengan detail database MySQL Anda.
 DB_HOST = "localhost"       # Host database
-DB_USER = "root"            # Username database
-DB_PASSWORD = "12345678"            # Password database
+DB_USER = "yunus"            # Username database
+DB_PASSWORD = "Yunus@1234"            # Password database
 DB_NAME = "btc_scanning"  # Nama database
 
 def get_db_connection():
