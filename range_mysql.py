@@ -13,8 +13,8 @@ import sys
 # 0000000000000000000000000000000000000000000000000000000000080000
 # 0000000000000000000000000000000000000000000000400000000000000000
 # 00000000000000000000000000000000000000000000007fffffffffffffffff
-start_hex_range = '0000000000000000000000000000000000000000000000000000000000080000'
-end_hex_range = '00000000000000000000000000000000000000000000000000000000000fffff'
+start_hex_range = '0000000000000000000000000000000000000000000000400000000000000000'
+end_hex_range = '00000000000000000000000000000000000000000000007fffffffffffffffff'
 
 # Jumlah bagian yang Anda inginkan untuk membagi rentang.
 num_splits = 100
@@ -24,8 +24,8 @@ num_splits = 100
 # ==================================================================================================
 # Ubah nilai di bawah ini dengan detail database MySQL Anda.
 DB_HOST = "localhost"       # Host database
-DB_USER = "root"            # Username database
-DB_PASSWORD = "12345678"            # Password database
+DB_USER = "yunus"            # Username database
+DB_PASSWORD = "Yunus@1234"            # Password database
 DB_NAME = "btc_scanning"  # Nama database
 
 def get_db_connection():
